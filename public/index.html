@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRS Player MSX</title>
+<script src="https://msx.benzac.de/js/tvx-plugin-module.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;user-select:none}
+body{background:#0b0e14;color:#fff;overflow-x:hidden;min-height:100vh;width:100%;padding-bottom:50px}
+input{user-select:text}
+.navbar{position:fixed;top:0;left:0;right:0;min-height:70px;background:linear-gradient(180deg,rgba(0,0,0,.9),transparent);display:flex;align-items:center;justify-content:space-between;padding:0 40px;z-index:100}
+.nav-left{display:flex;align-items:center;gap:32px}.brand-logo{font-size:28px;font-weight:900;letter-spacing:1px;color:#00a8ff;display:flex;align-items:center;gap:6px;text-shadow:0 2px 10px #00a8ff80}.brand-logo span{font-size:10px;display:block;color:#ccc;letter-spacing:2px;font-weight:400}
+.nav-links{display:flex;align-items:center;gap:24px}.nav-item{font-size:18px;font-weight:600;color:#d1d5db;padding:8px 12px;border-radius:6px;cursor:pointer;position:relative;transition:all .2s}.nav-item.kids{font-weight:900;font-size:22px;letter-spacing:2px;background:linear-gradient(90deg,#ff4d4d,#f9cb28,#4cd137,#00a8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.nav-item.active{color:#fff}.nav-item.active:after{content:'';position:absolute;bottom:-4px;left:12px;right:12px;height:3px;background:#00a8ff;border-radius:2px}
+.focusable.focused{outline:3px solid #00a8ff;transform:scale(1.035);z-index:10;box-shadow:0 0 20px #00a8ff99}
+.nav-right{text-align:right}.player-title{font-size:15px;font-weight:800}.exp-date{font-size:11px;color:#9ca3af}
+.hero{position:relative;width:100%;height:62vh;min-height:360px;background-size:cover;background-position:center;display:flex;align-items:center;padding:0 50px;transition:background-image .5s}.hero:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#0b0e14f2 0%,#0b0e14b3 45%,#0b0e141a 100%),linear-gradient(180deg,#0b0e144d 0%,#0b0e14 100%)}
+.hero-content{position:relative;z-index:2;max-width:600px;margin-top:40px}.hero-tag{font-size:12px;font-weight:800;letter-spacing:2px;color:#d1d5db;margin-bottom:10px;text-transform:uppercase}.hero-title{font-size:42px;font-weight:900;line-height:1.1;margin-bottom:14px;text-shadow:0 4px 12px #000c}.hero-sub{font-size:13px;font-weight:600;color:#e5e7eb;margin-bottom:8px;text-transform:uppercase}.hero-desc{font-size:14px;color:#9ca3af;margin-bottom:24px}
+.btn-watch{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(180deg,#1e6b9b,#104263);border:1px solid #3898d4;color:#fff;font-size:16px;font-weight:700;padding:12px 32px;border-radius:8px;cursor:pointer}
+.hero-dots{position:absolute;bottom:25px;right:50px;display:flex;align-items:center;gap:8px;z-index:2}.dot{width:10px;height:10px;border-radius:50%;background:#ffffff4d;transition:all .3s}.dot.active{width:26px;border-radius:6px;background:#00a8ff}
+.main-container{padding:0 50px 60px;position:relative;z-index:5;margin-top:-15px}.section-title{font-size:20px;font-weight:700;margin-bottom:14px;color:#f3f4f6}.streamings-row{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:16px;margin-bottom:36px}
+.streaming-card{height:85px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #ffffff1a;padding:12px;position:relative;overflow:hidden}
+.streaming-card.active-platform{border-color:#00a8ff;box-shadow:0 0 15px #00a8ff66}
+.st-netflix{background:linear-gradient(135deg,#141414,#2b0909)}.st-prime{background:linear-gradient(135deg,#0b253c,#061524)}.st-disney{background:linear-gradient(135deg,#091326,#1a2d52)}.st-max{background:linear-gradient(135deg,#2d0b59,#4c118f)}.st-paramount{background:linear-gradient(135deg,#003087,#0064ff)}.st-apple{background:linear-gradient(135deg,#1c1c1e,#2c2c2e)}.st-globoplay{background:linear-gradient(135deg,#2b1d28,#3d1b24)}.st-crunchyroll{background:linear-gradient(135deg,#b84509,#f47521)}
+.st-logo-text{font-size:20px;font-weight:900;text-align:center;letter-spacing:.5px}.st-netflix .st-logo-text{color:#e50914;font-size:38px;font-family:Impact,sans-serif}.st-prime .st-logo-text{color:#00a8e1}.st-disney .st-logo-text{color:#fff;font-family:Georgia,serif}.st-max .st-logo-text{color:#fff;text-transform:lowercase;font-size:26px}.st-paramount .st-logo-text{color:#fff;font-size:16px}.st-apple .st-logo-text{color:#fff;font-size:24px}.st-globoplay .st-logo-text{color:#fff;font-size:20px}.st-crunchyroll .st-logo-text{color:#fff;font-size:17px}
+.search-box{display:none;margin-bottom:24px}.search-input{width:100%;max-width:500px;padding:14px 20px;border-radius:8px;border:2px solid #2d3748;background:#1a202c;color:#fff;font-size:16px}
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:20px}.vod-card{background:#161b26;border-radius:10px;overflow:hidden;cursor:pointer;transition:all .2s;border:2px solid transparent;display:flex;flex-direction:column}.vod-poster{width:100%;height:240px;object-fit:cover;background:#0f131a}.vod-info{padding:10px}.vod-title{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}.vod-group{font-size:11px;color:#00a8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.login-overlay{position:fixed;inset:0;background:#080b10f5;backdrop-filter:blur(12px);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;overflow:auto}.login-box{background:#141923;border:1px solid #ffffff1f;border-radius:16px;padding:36px;width:100%;max-width:440px;box-shadow:0 20px 50px #000c}.login-box h2{font-size:24px;margin-bottom:8px;color:#00a8ff}.login-box p{font-size:13px;color:#9ca3af;margin-bottom:24px}.form-group{margin-bottom:16px}.form-group label{display:block;font-size:12px;font-weight:700;color:#d1d5db;margin-bottom:6px;text-transform:uppercase}.form-input{width:100%;padding:12px 16px;border-radius:8px;border:1px solid #2d3748;background:#0b0e14;color:#fff;font-size:15px;user-select:text;outline:none}.form-input:focus{border-color:#00a8ff;box-shadow:0 0 0 3px #00a8ff33}
+.login-actions{display:flex;gap:12px;margin-top:24px}.btn-save{flex:1;padding:14px;background:#00a8ff;color:#fff;font-weight:800;border:0;border-radius:8px;cursor:pointer;font-size:15px}.btn-close{padding:14px 20px;background:#2d3748;color:#fff;font-weight:700;border:0;border-radius:8px;cursor:pointer;font-size:15px}
+button,.nav-item,.streaming-card,.vod-card{touch-action:manipulation}
+@media(max-width:900px){.navbar{position:relative;padding:15px 20px;align-items:flex-start}.nav-left{display:block}.nav-links{gap:6px;flex-wrap:wrap;margin-top:12px}.nav-item{font-size:14px;padding:7px}.nav-item.kids{font-size:17px}.nav-right{display:none}.hero{height:48vh;padding:0 24px}.hero-title{font-size:32px}.main-container{padding:0 20px 40px}.streamings-row{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.streaming-card{height:70px}.login-box{padding:24px}.login-box h2{font-size:22px}}
+@media(max-width:480px){.streamings-row{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.vod-poster{height:210px}.login-actions{flex-direction:column}.btn-close{width:100%}}
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <h2>Configurar Servidor IPTV</h2>
+        <p>Insira o Host/DNS, Usuário e Senha para carregar seus canais, filmes e séries.</p>
+        <div class="form-group">
+            <label for="iptvDns">Host / DNS (ex: http://meudns.com:80)</label>
+            <input type="url" id="iptvDns" class="form-input focusable" placeholder="http://servidor.com:80" autocomplete="url" inputmode="url">
+        </div>
+        <div class="form-group">
+            <label for="iptvUser">Usuário</label>
+            <input type="text" id="iptvUser" class="form-input focusable" placeholder="Digite seu usuário" autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label for="iptvPass">Senha</label>
+            <input type="password" id="iptvPass" class="form-input focusable" placeholder="Digite sua senha" autocomplete="current-password">
+        </div>
+        <div class="login-actions">
+            <button type="button" class="btn-save focusable" id="btnSaveLogin">Conectar e Carregar</button>
+            <button type="button" class="btn-close focusable" id="btnCancelLogin">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<div class="navbar">
+    <div class="nav-left">
+        <div class="brand-logo"><div>GRS▶<span>GRUPO SOLUTIONS</span></div></div>
+        <div class="nav-links">
+            <div class="nav-item focusable active" data-nav="inicio" tabindex="0">Início</div>
+            <div class="nav-item focusable" data-nav="canais" tabindex="0">Canais</div>
+            <div class="nav-item focusable" data-nav="filmes" tabindex="0">Filmes</div>
+            <div class="nav-item focusable" data-nav="series" tabindex="0">Séries</div>
+            <div class="nav-item kids focusable" data-nav="kids" tabindex="0">KIDS</div>
+            <div class="nav-item focusable" data-nav="buscar" tabindex="0">Buscar</div>
+            <div class="nav-item focusable" data-nav="config" tabindex="0">⚙ Configurações</div>
+        </div>
+    </div>
+    <div class="nav-right">
+        <div class="player-title">GRS PLAYER</div>
+        <div class="exp-date" id="expDateLabel">📅 Vencimento: --/--/----</div>
+    </div>
+</div>
+
+<div class="hero" id="heroBanner">
+    <div class="hero-content">
+        <div class="hero-tag">GRUPO SOLUTIONS • DESTAQUE</div>
+        <div class="hero-title" id="heroTitle">Configure sua Lista</div>
+        <div class="hero-sub">LANÇAMENTO • ADICIONADO AO SERVIDOR</div>
+        <div class="hero-desc">Pressione Assistir para reproduzir ou acesse Configurações para trocar de conta.</div>
+        <button type="button" class="btn-watch focusable" id="heroPlayBtn">▶ Assistir</button>
+    </div>
+    <div class="hero-dots" id="heroDots"></div>
+</div>
+
+<div class="main-container">
+    <div class="section-title">Streamings</div>
+    <div class="streamings-row">
+        <div class="streaming-card st-netflix focusable" data-platform="netflix" tabindex="0"><div class="st-logo-text">N</div></div>
+        <div class="streaming-card st-prime focusable" data-platform="prime" tabindex="0"><div class="st-logo-text">prime video</div></div>
+        <div class="streaming-card st-disney focusable" data-platform="disney" tabindex="0"><div class="st-logo-text">Disney+</div></div>
+        <div class="streaming-card st-max focusable" data-platform="max" tabindex="0"><div class="st-logo-text">max</div></div>
+        <div class="streaming-card st-paramount focusable" data-platform="paramount" tabindex="0"><div class="st-logo-text">Paramount+</div></div>
+        <div class="streaming-card st-apple focusable" data-platform="apple" tabindex="0"><div class="st-logo-text">tv</div></div>
+        <div class="streaming-card st-globoplay focusable" data-platform="globoplay" tabindex="0"><div class="st-logo-text">globoplay</div></div>
+        <div class="streaming-card st-crunchyroll focusable" data-platform="crunchyroll" tabindex="0"><div class="st-logo-text">Crunchyroll</div></div>
+    </div>
+    <div class="search-box" id="searchContainer">
+        <input type="search" id="searchInput" class="search-input focusable" placeholder="Digite o nome do filme, série ou canal..." autocomplete="off">
+    </div>
+    <div class="section-title" id="catalogHeadline">Todos os Conteúdos</div>
+    <div class="catalog-grid" id="catalogGrid"></div>
+</div>
+
+<script>
+let allItems = [];
+let featuredItems = [];
+let currentSlide = 0;
+let slideInterval = null;
+let focusIndex = 0;
+
+const platformKeywords = {
+    netflix:['netflix'],prime:['prime','amazon'],disney:['disney'],max:['max','hbo'],
+    paramount:['paramount'],apple:['apple'],globoplay:['globoplay','globo'],
+    crunchyroll:['crunchyroll','anime','animes']
+};
+
+function getSavedCredentials() {
+    try {
+        const raw = localStorage.getItem('grs_iptv_login');
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+}
+
+function getVisibleFocusables() {
+    const modal = document.getElementById('loginOverlay');
+    if (modal.style.display === 'flex') {
+        return Array.from(modal.querySelectorAll('.focusable')).filter(el => !el.disabled);
+    }
+    return Array.from(document.querySelectorAll('.focusable')).filter(el =>
+        el.offsetParent !== null && !modal.contains(el) && !el.disabled
+    );
+}
+
+function updateFocusableElements() {
+    const elements = getVisibleFocusables();
+    elements.forEach((el,index) => el.classList.toggle('focused', index === focusIndex));
+}
+
+function focusElement(element) {
+    const elements = getVisibleFocusables();
+    const index = elements.indexOf(element);
+    if (index < 0) return;
+    focusIndex = index;
+    updateFocusableElements();
+    element.focus({preventScroll:true});
+    element.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function openLoginModal() {
+    const creds = getSavedCredentials();
+    if (creds) {
+        document.getElementById('iptvDns').value = creds.dns || '';
+        document.getElementById('iptvUser').value = creds.username || '';
+        document.getElementById('iptvPass').value = creds.password || '';
+    }
+    const modal = document.getElementById('loginOverlay');
+    modal.style.display = 'flex';
+    focusIndex = 0;
+    updateFocusableElements();
+    setTimeout(() => {
+        const dns = document.getElementById('iptvDns');
+        dns.focus();
+        dns.scrollIntoView({block:'center'});
+    }, 80);
+}
+
+function closeLoginModal() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    focusIndex = 0;
+    updateFocusableElements();
+}
+
+document.getElementById('btnSaveLogin').addEventListener('click', () => {
+    const dns = document.getElementById('iptvDns').value.trim();
+    const username = document.getElementById('iptvUser').value.trim();
+    const password = document.getElementById('iptvPass').value;
+
+    if (!dns || !username || !password) {
+        alert('Preencha o Host/DNS, usuário e senha.');
+        return;
+    }
+
+    localStorage.setItem('grs_iptv_login', JSON.stringify({dns,username,password}));
+    closeLoginModal();
+    loadCatalog();
+});
+
+document.getElementById('btnCancelLogin').addEventListener('click', closeLoginModal);
+
+function playStream(url,title) {
+    if (window.TVXPluginTools && typeof TVXPluginTools.executeAction === 'function') {
+        TVXPluginTools.executeAction(`video:${url}`);
+    } else {
+        window.open(url,'_blank');
+    }
+}
+
+async function loadCatalog() {
+    const creds = getSavedCredentials();
+    if (!creds || !creds.dns || !creds.username || !creds.password) {
+        openLoginModal();
+        return;
+    }
+
+    document.getElementById('heroTitle').textContent = 'Carregando lista do servidor...';
+
+    try {
+        const params = new URLSearchParams({
+            dns:creds.dns,username:creds.username,password:creds.password
+        });
+        const response = await fetch(`/api/catalog?${params.toString()}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        allItems = Array.isArray(data) ? data : (data.items || []);
+
+        if (data.expDate) {
+            document.getElementById('expDateLabel').textContent = `📅 Vencimento: ${data.expDate}`;
+        }
+
+        if (!allItems.length) {
+            document.getElementById('heroTitle').textContent = 'Lista vazia ou login inválido';
+            openLoginModal();
+            return;
+        }
+
+        setupHero();
+        renderCatalog(allItems,'Destaques e Adicionados Recentemente');
+    } catch(error) {
+        console.error(error);
+        document.getElementById('heroTitle').textContent = 'Erro ao carregar catálogo';
+        openLoginModal();
+    }
+}
+
+function setupHero() {
+    featuredItems = allItems.slice(0,8);
+    if (!featuredItems.length) return;
+
+    const dots = document.getElementById('heroDots');
+    dots.innerHTML = '';
+    featuredItems.forEach((item,index) => {
+        const dot = document.createElement('div');
+        dot.className = `dot ${index === 0 ? 'active' : ''}`;
+        dots.appendChild(dot);
+    });
+
+    updateHeroSlide(0);
+    if (slideInterval) clearInterval(slideInterval);
+    slideInterval = setInterval(() => {
+        currentSlide = (currentSlide + 1) % featuredItems.length;
+        updateHeroSlide(currentSlide);
+    },6000);
+}
+
+function updateHeroSlide(index) {
+    const item = featuredItems[index];
+    if (!item) return;
+    document.getElementById('heroBanner').style.backgroundImage = `url("${String(item.logo).replace(/"/g,'%22')}")`;
+    document.getElementById('heroTitle').textContent = item.name;
+    document.getElementById('heroPlayBtn').onclick = () => playStream(item.url,item.name);
+    document.querySelectorAll('.dot').forEach((dot,i) => dot.classList.toggle('active',i === index));
+}
+
+function renderCatalog(items,title) {
+    document.getElementById('catalogHeadline').textContent = `${title} (${items.length})`;
+    const grid = document.getElementById('catalogGrid');
+    grid.innerHTML = '';
+
+    items.slice(0,120).forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'vod-card focusable';
+        const img = document.createElement('img');
+        img.className = 'vod-poster';
+        img.src = item.logo || '';
+        img.alt = item.name || '';
+        img.onerror = () => { img.src = 'https://via.placeholder.com/300x450.png?text=GRS+Player'; };
+
+        const info = document.createElement('div');
+        info.className = 'vod-info';
+        const name = document.createElement('div');
+        name.className = 'vod-title';
+        name.textContent = item.name || 'Sem nome';
+        const group = document.createElement('div');
+        group.className = 'vod-group';
+        group.textContent = item.group || 'Geral';
+
+        info.append(name,group);
+        card.append(img,info);
+        card.addEventListener('click',() => playStream(item.url,item.name));
+        grid.appendChild(card);
+    });
+
+    updateFocusableElements();
+}
+
+function filterByPlatform(platformKey,cardElement) {
+    document.querySelectorAll('.streaming-card').forEach(el => el.classList.remove('active-platform'));
+    cardElement.classList.add('active-platform');
+
+    const keywords = platformKeywords[platformKey] || [platformKey];
+    const filtered = allItems.filter(item => {
+        const target = `${item.group} ${item.name}`.toLowerCase();
+        return keywords.some(keyword => target.includes(keyword));
+    });
+    renderCatalog(filtered,`Plataforma: ${platformKey.toUpperCase()}`);
+}
+
+function filterByNav(navType) {
+    if (navType === 'config') {
+        openLoginModal();
+        return;
+    }
+
+    document.querySelectorAll('.streaming-card').forEach(el => el.classList.remove('active-platform'));
+    document.getElementById('searchContainer').style.display = navType === 'buscar' ? 'block' : 'none';
+
+    if (navType === 'inicio') {
+        renderCatalog(allItems,'Destaques e Adicionados Recentemente');
+    } else if (navType === 'canais') {
+        const filtered = allItems.filter(item => {
+            const group = (item.group || '').toLowerCase();
+            return group.includes('canais') || group.includes('tv') || group.includes('abertos') ||
+                group.includes('esporte') || (!group.includes('filme') && !group.includes('série') && !group.includes('serie'));
+        });
+        renderCatalog(filtered,'Canais ao Vivo');
+    } else if (navType === 'filmes') {
+        const filtered = allItems.filter(item => {
+            const group = (item.group || '').toLowerCase();
+            return group.includes('filme') || group.includes('vod') || group.includes('cinema');
+        });
+        renderCatalog(filtered,'Catálogo de Filmes');
+    } else if (navType === 'series') {
+        const filtered = allItems.filter(item => {
+            const group = (item.group || '').toLowerCase();
+            return group.includes('série') || group.includes('serie') || (item.name || '').toLowerCase().includes('s0');
+        });
+        renderCatalog(filtered,'Catálogo de Séries');
+    } else if (navType === 'kids') {
+        const filtered = allItems.filter(item => {
+            const text = `${item.group} ${item.name}`.toLowerCase();
+            return text.includes('kids') || text.includes('infantil') || text.includes('desenho') ||
+                text.includes('animação') || text.includes('disney');
+        });
+        renderCatalog(filtered,'Espaço KIDS');
+    } else if (navType === 'buscar') {
+        document.getElementById('searchInput').focus();
+    }
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click',() => {
+        const navType = item.getAttribute('data-nav');
+        if (navType !== 'config') {
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+        }
+        filterByNav(navType);
+    });
+});
+
+document.querySelectorAll('.streaming-card').forEach(card => {
+    card.addEventListener('click',() => filterByPlatform(card.dataset.platform,card));
+});
+
+document.getElementById('searchInput').addEventListener('input',event => {
+    const term = event.target.value.toLowerCase();
+    const filtered = allItems.filter(item =>
+        (item.name || '').toLowerCase().includes(term) ||
+        (item.group || '').toLowerCase().includes(term)
+    );
+    renderCatalog(filtered,`Resultado da busca: "${event.target.value}"`);
+});
+
+/* Toque, clique ou foco por teclado atualizam o índice sem roubar o foco do campo. */
+document.addEventListener('focusin',event => {
+    if (!event.target.classList.contains('focusable')) return;
+    const elements = getVisibleFocusables();
+    const index = elements.indexOf(event.target);
+    if (index !== -1) {
+        focusIndex = index;
+        updateFocusableElements();
+    }
+});
+
+document.addEventListener('click',event => {
+    const target = event.target.closest('.focusable');
+    if (target) focusElement(target);
+});
+
+/* Navegação por controle remoto. Enquanto um campo está editável, não intercepta
+   Enter nem as teclas usadas pelo teclado virtual do dispositivo. */
+window.addEventListener('keydown',event => {
+    const modal = document.getElementById('loginOverlay');
+    const active = document.activeElement;
+    const isTextEntry = active && (
+        active.tagName === 'INPUT' ||
+        active.tagName === 'TEXTAREA' ||
+        active.isContentEditable
+    );
+
+    if (modal.style.display === 'flex' && event.key === 'Escape') {
+        closeLoginModal();
+        event.preventDefault();
+        return;
+    }
+
+    if (isTextEntry) return;
+
+    const elements = getVisibleFocusables();
+    if (!elements.length) return;
+
+    const current = elements.indexOf(active);
+    if (current >= 0) focusIndex = current;
+
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        focusIndex = Math.min(focusIndex + 1,elements.length - 1);
+        event.preventDefault();
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        focusIndex = Math.max(focusIndex - 1,0);
+        event.preventDefault();
+    } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        elements[focusIndex].click();
+        return;
+    } else {
+        return;
+    }
+
+    updateFocusableElements();
+    const selected = elements[focusIndex];
+    if (selected) {
+        selected.focus({preventScroll:true});
+        selected.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+});
+
+window.onload = () => {
+    if (window.TVXPluginTools && typeof TVXPluginTools.onReady === 'function') {
+        TVXPluginTools.onReady(() => loadCatalog());
+    } else {
+        loadCatalog();
+    }
+};
+</script>
+</body>
+</html>
